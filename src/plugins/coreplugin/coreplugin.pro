@@ -263,6 +263,7 @@ else:macx {
 }
 else:unix {
     SOURCES += progressmanager/progressmanager_x11.cpp
+    QT += dbus
 
     IMAGE_SIZE_LIST = 16 24 32 48 64 128 256 512
 

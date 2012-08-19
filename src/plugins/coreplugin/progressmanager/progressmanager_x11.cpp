@@ -29,9 +29,46 @@
 ****************************************************************************/
 
 #include "progressmanager_p.h"
+#include <QDBusMessage>
+#include <QDBusConnection>
+#include <QDBusConnectionInterface>
+#include <QStringList>
+#include <QApplication>
+
+namespace {
+namespace Unity {
+
+static int max = 0;
+static int min = 0;
+static bool isSupported = false;
+
+static inline void sendMessage(const QVariantMap &map)
+{
+    QDBusMessage message = QDBusMessage::createSignal("/qtcreator", "com.canonical.Unity.LauncherEntry", "Update");
+    QVariantList args;
+    args << "application://qtcreator-qt-creator.desktop"
+         << map;
+    message.setArguments(args);
+    if (!QDBusConnection::sessionBus().send(message))
+        qWarning("Unable to send message");
+}
+
+template <typename T>
+static void sendMessage(const char *name, const T &value)
+{
+    QVariantMap map;
+    map.insert(QLatin1String(name), value);
+    sendMessage(map);
+}
+
+} //namespace Unity
+}
 
 void Core::Internal::ProgressManagerPrivate::initInternal()
 {
+    QDBusConnection connection = QDBusConnection::sessionBus();
+    QStringList services = connection.interface()->registeredServiceNames().value();
+    Unity::isSupported = services.contains("com.canonical.Unity");
 }
 
 void Core::Internal::ProgressManagerPrivate::cleanup()
@@ -40,21 +77,34 @@ void Core::Internal::ProgressManagerPrivate::cleanup()
 
 void Core::Internal::ProgressManagerPrivate::doSetApplicationLabel(const QString &text)
 {
-    Q_UNUSED(text)
+    if (Unity::isSupported) {
+        qint64 count = text.toInt();
+        QVariantMap map;
+        map.insert(QLatin1String("count"), count);
+        map.insert(QLatin1String("count-visible"), count > 0);
+        Unity::sendMessage(map);
+    }
 }
 
 void Core::Internal::ProgressManagerPrivate::setApplicationProgressRange(int min, int max)
 {
-    Q_UNUSED(min)
-    Q_UNUSED(max)
+    Unity::min = min;
+    Unity::max = max;
 }
 
 void Core::Internal::ProgressManagerPrivate::setApplicationProgressValue(int value)
 {
-    Q_UNUSED(value)
+    if (Unity::isSupported) {
+        int total = Unity::max-Unity::min;
+        double percents = 0;
+        if (total)
+            percents = double(value-Unity::min)/double(total);
+        Unity::sendMessage("progress", percents);
+    }
 }
 
 void Core::Internal::ProgressManagerPrivate::setApplicationProgressVisible(bool visible)
 {
-    Q_UNUSED(visible)
+    if (Unity::isSupported)
+        Unity::sendMessage("progress-visible", visible);
 }
