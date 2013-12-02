@@ -44,9 +44,9 @@ static bool isSupported = false;
 
 static inline void sendMessage(const QVariantMap &map)
 {
-    QDBusMessage message = QDBusMessage::createSignal("/qtcreator", "com.canonical.Unity.LauncherEntry", "Update");
+    QDBusMessage message = QDBusMessage::createSignal(QLatin1String("/qtcreator"), QLatin1String("com.canonical.Unity.LauncherEntry"), QLatin1String("Update"));
     QVariantList args;
-    args << "application://qtcreator-qt-creator.desktop"
+    args << QLatin1String("application://qtcreator-qt-creator.desktop")
          << map;
     message.setArguments(args);
     if (!QDBusConnection::sessionBus().send(message))
@@ -68,7 +68,7 @@ void Core::Internal::ProgressManagerPrivate::initInternal()
 {
     QDBusConnection connection = QDBusConnection::sessionBus();
     QStringList services = connection.interface()->registeredServiceNames().value();
-    Unity::isSupported = services.contains("com.canonical.Unity");
+    Unity::isSupported = services.contains(QLatin1String("com.canonical.Unity"));
 }
 
 void Core::Internal::ProgressManagerPrivate::cleanup()
