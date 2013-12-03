@@ -46,7 +46,7 @@ static inline void sendMessage(const QVariantMap &map)
 {
     QDBusMessage message = QDBusMessage::createSignal(QLatin1String("/qtcreator"), QLatin1String("com.canonical.Unity.LauncherEntry"), QLatin1String("Update"));
     QVariantList args;
-    args << QLatin1String("application://qtcreator-qt-creator.desktop")
+    args << QLatin1String("application://qtcreator.desktop")
          << map;
     message.setArguments(args);
     if (!QDBusConnection::sessionBus().send(message))
